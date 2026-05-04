@@ -1,23 +1,19 @@
 name: Build packages
 on: [push, pull_request]
+
 jobs:
   build:
-    runs-on: [self-hosted, linux, X64]
+    runs-on: ubuntu-latest
     environment: "signing key"
     steps:
-    - name: cleanup work dir
-      run: | 
-        echo ${{ secrets.SUDO_PASSWD }} | sudo -S rm -rf $PWD
-        mkdir -p $PWD
     - name: checkout repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: '0'
     - name: Build packages
       run: |
-        echo "$GITHUB_REPOSITORY" > ./repo
-        echo -n "$GPG_SIGNING_KEY" > ./gpg_key
-        file ./gpg_key
+        echo "" > ./repo
+        echo -n "" > ./gpg_key
         docker run -t -v $PWD:/build archlinux:latest /bin/bash /build/entrypoint.sh
         ls -l .
       env:
@@ -36,7 +32,7 @@ jobs:
           ${{ github.workspace }}/*-x13s.db*
 
     - name: Release 
-      if: ${{ github.ref == 'refs/heads/trunk' && !contains(github.event.head_commit.message, '[no rel]') }}
+      if: ${{ github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[no rel]') }}
       uses: softprops/action-gh-release@v1
       with:
         files: |
@@ -44,6 +40,5 @@ jobs:
           ${{ github.workspace }}/*-x13s.files*
           ${{ github.workspace }}/*-x13s.db*
         tag_name: packages 
-
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
