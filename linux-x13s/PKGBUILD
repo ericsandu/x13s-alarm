@@ -8,85 +8,90 @@ pkgbase=linux-x13s
 _srcname=linux-6.18
 _kernelname=${pkgbase#linux}
 _desc="ThinkPad X13s (Snapdragon 8cx Gen 3)"
-pkgver="6.18.12"
+pkgver=6.18.12
 pkgrel=0
 
-case "$CARCH" in
-  aarch64)
-    _arch=arm64
-    arch=('aarch64')
-    # If host == target, no cross compiler needed
-    if [[ $(uname -m) == aarch64 ]]; then
-      _cross=""
-    else
-      _cross="aarch64-linux-gnu-"
-    fi
-    ;;
-  x86_64)
-    _arch=x86_64
-    _cross=""
-    arch=('x86_64')
-    ;;
-esac
+arch=('aarch64' 'x86_64')
 url="http://www.kernel.org/"
 license=('GPL2')
 makedepends=('xmlto' 'docbook-xsl' 'kmod' 'inetutils' 'bc' 'git' 'uboot-tools' 'dtc')
 options=('!strip')
 source=('config'
-        'kernel.keyblock'
-        'kernel_data_key.vbprivk'
-        'linux.preset'
-        '60-linux.hook'
-        '90-linux.hook'
-        'mkinitcpio.conf.d-x13s.conf'
-        )
-md5sums=('45a49ec7ef696e55ac3fc3405f87d4d6'
-         '61c5ff73c136ed07a7aadbf58db3d96a'
-         '584777ae88bce2c5659960151b64c7d8'
-         '593dacde485356f1ba746658d70b82d9'
-         '0a5f16bfec6ad982a2f6782724cca8ba'
-         '6f99095fbe9f577233b53a83802aab59'
-         '2300ce332b36a73e9ab097888d53c98a')
+  'kernel.keyblock'
+  'kernel_data_key.vbprivk'
+  'linux.preset'
+  '60-linux.hook'
+  '90-linux.hook'
+  'mkinitcpio.conf.d-x13s.conf'
+)
+
+# Use dummy md5sum for the local source directory
+md5sums=('f327664e8921ac39b3363752ac773d8c'
+  '61c5ff73c136ed07a7aadbf58db3d96a'
+  '584777ae88bce2c5659960151b64c7d8'
+  '593dacde485356f1ba746658d70b82d9'
+  '0a5f16bfec6ad982a2f6782724cca8ba'
+  '6f99095fbe9f577233b53a83802aab59'
+  '2300ce332b36a73e9ab097888d53c98a')
+
+# Determine architecture and cross-compiler
+case "$CARCH" in
+  aarch64)
+    _arch=arm64
+    _cross=$( [[ $(uname -m) == aarch64 ]] && echo "" || echo "aarch64-linux-gnu-" )
+    ;;
+  x86_64)
+    _arch=x86_64
+    _cross=""
+    ;;
+esac
 
 prepare() {
-  echo "Shallow cloning steev's linux repo"
-  # if src dir exists, remove it
-  [[ -d ${_srcname} ]] && rm -rf ${_srcname}
-  git clone --depth=1 https://github.com/steev/linux.git ${_srcname} -b ${_branch}
+  cd "$_srcname"
 
-  cd $_srcname
+  export ARCH="$_arch"
+  export CROSS_COMPILE="$_cross"
 
   echo "Setting version..."
-  #scripts/setlocalversion --save-scmversion
-  echo "-$pkgrel" > localversion.10-pkgrel
-  echo "${pkgbase#linux}" > localversion.20-pkgname
+  echo "-$pkgrel" >localversion.10-pkgrel.new
+  if ! cmp -s localversion.10-pkgrel.new localversion.10-pkgrel; then
+    mv localversion.10-pkgrel.new localversion.10-pkgrel
+  else
+    rm localversion.10-pkgrel.new
+  fi
 
-  # add upstream patch
-  # We are using a custom tree, not needed
+  echo "${pkgbase#linux}" >localversion.20-pkgname.new
+  if ! cmp -s localversion.20-pkgname.new localversion.20-pkgname; then
+    mv localversion.20-pkgname.new localversion.20-pkgname
+  else
+    rm localversion.20-pkgname.new
+  fi
 
-  # ALARM patches
-  #patch -Np1 -i ../fix-mutter.patch
-
-  cat "${srcdir}/config" > ./.config
+  # Only update .config if necessary to avoid unnecessary rebuilds
+  if ! cmp -s "${srcdir}/config" .config; then
+    cp "${srcdir}/config" .config
+    make olddefconfig
+  fi
 }
 
 build() {
-  cd ${_srcname}
+  cd "$_srcname"
+
   export ARCH="$_arch"
   export CROSS_COMPILE="$_cross"
 
   # get kernel version
   make prepare
-  make -s kernelrelease > version
+  make -s kernelrelease >version
 
   # build!
   unset LDFLAGS
   make ${MAKEFLAGS} Image Image.gz modules
-  # Generate device tree blobs with symbols to support applying device tree overlays in U-Boot
-  make ${MAKEFLAGS} DTC_FLAGS="-@" dtbs
+  # Generate ONLY the specific X13s device tree blob to avoid build failures in other DTBs
+  make ${MAKEFLAGS} qcom/sc8280xp-lenovo-thinkpad-x13s.dtb
 }
 
-_package() {
+package_linux-x13s() {
   pkgdesc="The Linux Kernel and modules - ${_desc}"
   depends=(
     coreutils
@@ -102,9 +107,9 @@ _package() {
   replaces=('linux-armv8')
   conflicts=('linux')
   backup=("etc/mkinitcpio.d/${pkgbase}.preset")
-  install=${pkgname}.install
+  install=${pkgbase}.install
 
-  cd $_srcname
+  cd "$_srcname"
   export ARCH="$_arch"
   export CROSS_COMPILE="$_cross"
   local kernver="$(<version)"
@@ -113,20 +118,13 @@ _package() {
   echo "Installing boot image (compressed) and dtbs..."
   install -Dm644 arch/arm64/boot/Image.gz -T "${pkgdir}/boot/vmlinuz-linux"
   install -Dm644 arch/arm64/boot/Image -T "${pkgdir}/boot/vmlinux"
-  #make INSTALL_DTBS_PATH="${pkgdir}/boot/dtbs" dtbs_install
-  # We just need the X13s dtb
   install -Dm644 arch/arm64/boot/dts/qcom/sc8280xp-lenovo-thinkpad-x13s.dtb -t "${pkgdir}/boot"
 
   echo "Installing modules..."
   make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 DEPMOD=/doesnt/exist modules_install
 
-  # remove build and source links if they exist
-  if [[ -L "$modulesdir"/source ]]; then
-    rm "$modulesdir"/source
-  fi
-  if [[ -L "$modulesdir"/build ]]; then
-    rm "$modulesdir"/build
-  fi
+  # remove build and source links
+  rm -f "$modulesdir"/{build,source}
 
   # sed expression for following substitutions
   local _subst="
@@ -149,12 +147,12 @@ _package() {
     install -Dm644 /dev/stdin "${pkgdir}/usr/share/libalpm/hooks/90-${pkgbase}.hook"
 }
 
-_package-headers() {
+package_linux-x13s-headers() {
   pkgdesc="Header files and scripts for building modules for linux kernel - ${_desc}"
   provides=("linux-x13s-headers=${pkgver}")
   conflicts=('linux-x13s-headers')
 
-  cd $_srcname
+  cd "$_srcname"
   local builddir="$pkgdir/usr/lib/modules/$(<version)/build"
 
   echo "Installing build files..."
@@ -212,14 +210,14 @@ _package-headers() {
   local file
   while read -rd '' file; do
     case "$(file -bi "$file")" in
-      application/x-sharedlib\;*)      # Libraries (.so)
-        strip -v $STRIP_SHARED "$file" ;;
-      application/x-archive\;*)        # Libraries (.a)
-        strip -v $STRIP_STATIC "$file" ;;
-      application/x-executable\;*)     # Binaries
-        strip -v $STRIP_BINARIES "$file" ;;
-      application/x-pie-executable\;*) # Relocatable binaries
-        strip -v $STRIP_SHARED "$file" ;;
+    application/x-sharedlib\;*) # Libraries (.so)
+      strip -v $STRIP_SHARED "$file" ;;
+    application/x-archive\;*) # Libraries (.a)
+      strip -v $STRIP_STATIC "$file" ;;
+    application/x-executable\;*) # Binaries
+      strip -v $STRIP_BINARIES "$file" ;;
+    application/x-pie-executable\;*) # Relocatable binaries
+      strip -v $STRIP_SHARED "$file" ;;
     esac
   done < <(find "$builddir" -type f -perm -u+x ! -name vmlinux -print0)
 
@@ -228,9 +226,4 @@ _package-headers() {
   ln -sr "$builddir" "$pkgdir/usr/src/$pkgbase"
 }
 
-pkgname=("${pkgbase}" "${pkgbase}-headers")
-for _p in ${pkgname[@]}; do
-  eval "package_${_p}() {
-    _package${_p#${pkgbase}}
-  }"
-done
+pkgname=("linux-x13s" "linux-x13s-headers")
