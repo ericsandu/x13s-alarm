@@ -12,8 +12,8 @@ jobs:
         fetch-depth: '0'
     - name: Build packages
       run: |
-        echo "" > ./repo
-        echo -n "" > ./gpg_key
+        echo "$GITHUB_REPOSITORY" > ./repo
+        echo -n "$GPG_SIGNING_KEY" > ./gpg_key
         docker run -t -v $PWD:/build archlinux:latest /bin/bash /build/entrypoint.sh
         ls -l .
       env:
