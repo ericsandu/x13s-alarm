@@ -4,15 +4,15 @@ Packages for the ThinkPad X13s
 To use pre-built packages, add this section to the end of your `/etc/pacman.conf`:
 
 ```conf
-[ironrobin-x13s]
-Server = https://github.com/ironrobin/x13s-alarm/releases/download/packages
+[x13s-alarm]
+Server = https://ericsandu.github.io/x13s-alarm/
 ```
 
 You'll need to trust the public key in order to verify package signature:
 
 ```bash
-sudo pacman-key --recv-keys 6ED02751500A833A
-sudo pacman-key --lsign-key 6ED02751500A833A
+sudo pacman-key --recv-keys A7A1CBA34B419028
+sudo pacman-key --lsign-key A7A1CBA34B419028
 ```
 
 if it still says "unknown trust" even after you lsign it, try this and then resign:
