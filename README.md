@@ -5,7 +5,7 @@ To use pre-built packages, add this section to the end of your `/etc/pacman.conf
 
 ```conf
 [x13s-alarm]
-Server = https://ericsandu.github.io/x13s-alarm/
+Server = https://github.com/ericsandu/x13s-alarm/releases/latest/download/
 ```
 
 You'll need to trust the public key in order to verify package signature:
