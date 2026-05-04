@@ -26,7 +26,7 @@ source=('config'
 )
 
 # Use dummy md5sum for the local source directory
-md5sums=('ec2afb2fb54a7ab132322e00ba615e21'
+md5sums=('b4fea10d01de24dd2c637e888b51873c'
          '61c5ff73c136ed07a7aadbf58db3d96a'
          '584777ae88bce2c5659960151b64c7d8'
          '593dacde485356f1ba746658d70b82d9'
