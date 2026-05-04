@@ -5,6 +5,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     environment: "signing key"
+    if: "!contains(github.event.head_commit.message, '[no rel]')"
     steps:
     - name: checkout repo
       uses: actions/checkout@v4
