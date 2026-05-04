@@ -47,6 +47,11 @@ case "$CARCH" in
 esac
 
 prepare() {
+  if [ ! -d "$_srcname" ]; then
+    echo "Shallow cloning steev's linux repo"
+    git clone --depth=1 https://github.com/steev/linux.git "$_srcname" -b "$_branch"
+  fi
+
   cd "$_srcname"
 
   export ARCH="$_arch"
