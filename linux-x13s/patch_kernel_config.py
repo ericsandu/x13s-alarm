@@ -46,11 +46,22 @@ x13s_options = {
     "CONFIG_IP_NF_FILTER": "m",
     "CONFIG_IP_NF_NAT": "m",
     "CONFIG_NF_NAT": "m",
-    "CONFIG_NETFILTER_XT_TARGET_NAT": "m",
+    "CONFIG_NETFILTER_XT_NAT": "m",
+    "CONFIG_NETFILTER_XT_TARGET_NAT": "n",
+    "CONFIG_NETFILTER_XT_TARGET_MASQUERADE": "m",
+    "CONFIG_IP_NF_TARGET_MASQUERADE": "m",
+    "CONFIG_NETFILTER_XT_MATCH_ADDRTYPE": "m",
+    "CONFIG_NETFILTER_XT_MATCH_CONNTRACK": "m",
+    "CONFIG_NETFILTER_XT_MATCH_IPVS": "m",
+    "CONFIG_IP_VS": "m",
+    "CONFIG_IP_VS_NFCT": "y",
+    "CONFIG_IP_VS_PROTO_TCP": "y",
+    "CONFIG_IP_VS_PROTO_UDP": "y",
+    "CONFIG_IP_VS_RR": "m",
+    "CONFIG_IP_NF_TARGET_REJECT": "m",
     "CONFIG_NETFILTER_XT_MATCH_MULTIPORT": "m",
     "CONFIG_NF_NAT_IPV4": "m",
     "CONFIG_NF_NAT_IPV6": "m",
-    "CONFIG_IP_NF_NAT": "m",
     "CONFIG_IP6_NF_NAT": "m",
     "CONFIG_IP_NF_TARGET_REDIRECT": "m",
     "CONFIG_IP6_NF_TARGET_REDIRECT": "m",
@@ -201,7 +212,8 @@ for line in new_lines:
                 output_lines.append(f"{key}={x13s_options[key]}\n")
             else:
                 output_lines.append(f"{key}={value}")
-            leftovers.remove(key)
+            if key in leftovers:
+                leftovers.remove(key)
         elif key in anomalies:
             output_lines.append(f"{key}={anomalies[key]}\n")
         elif value != "not set":
