@@ -165,6 +165,14 @@ package_linux-x13s-headers() {
     localversion.* version vmlinux Kbuild
   install -Dt "$builddir/kernel" -m644 kernel/Makefile
   install -Dt "$builddir/arch/arm64" -m644 arch/arm64/Makefile
+
+  # If cross-compiling, we need to build the scripts for the target architecture
+  # so they are included in the package as working binaries.
+  if [[ "$_cross" != "" ]]; then
+    echo "Building scripts for target architecture..."
+    make HOSTCC="${_cross}gcc" ARCH="$_arch" CROSS_COMPILE="$_cross" scripts
+  fi
+
   cp -t "$builddir" -a scripts
 
   # add xfs and shmem for aufs building
@@ -214,13 +222,6 @@ package_linux-x13s-headers() {
   find "$builddir" -type f -name "*.mod" -delete
   find "$builddir" -type f -name "*.mod.c" -delete
   find "$builddir" -type f -name "*.cmd" -delete
-
-  # remove all host binaries in scripts/ if cross-compiling
-  # DKMS will rebuild them natively on the target machine.
-  if [[ "$_cross" != "" ]]; then
-    echo "Cleaning up host binaries for cross-compiled build..."
-    find "$builddir/scripts" -type f -not -name "*.sh" -not -name "*.pl" -not -name "*.py" -executable -delete
-  fi
 
   echo "Adding symlink..."
   mkdir -p "$pkgdir/usr/src"
