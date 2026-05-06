@@ -2,13 +2,13 @@
 # Maintainer: Alex Robinson <alex@ironrobin.net>
 
 buildarch=8
-_branch=lenovo-x13s-linux-6.19.y
+_branch=lenovo-x13s-linux-6.18.y
 
 pkgbase=linux-x13s
-_srcname=linux-6.19
+_srcname=linux-6.18
 _kernelname=${pkgbase#linux}
 _desc="ThinkPad X13s (Snapdragon 8cx Gen 3)"
-pkgver=6.19.1
+pkgver=6.18.1
 pkgrel=1
 
 arch=('aarch64' 'x86_64')
