@@ -2,13 +2,13 @@
 # Maintainer: Alex Robinson <alex@ironrobin.net>
 
 buildarch=8
-_branch=lenovo-x13s-linux-7.0.y
+_branch=lenovo-x13s-linux-6.19.y
 
 pkgbase=linux-x13s
-_srcname=linux-7.0
+_srcname=linux-6.19
 _kernelname=${pkgbase#linux}
 _desc="ThinkPad X13s (Snapdragon 8cx Gen 3)"
-pkgver=7.0.2
+pkgver=6.19.1
 pkgrel=1
 
 arch=('aarch64' 'x86_64')
@@ -27,23 +27,23 @@ source=('config'
 
 # Use dummy md5sum for the local source directory
 md5sums=('ca4b0ed37748155178aaaae3549a1bb5'
-         '61c5ff73c136ed07a7aadbf58db3d96a'
-         '584777ae88bce2c5659960151b64c7d8'
-         '593dacde485356f1ba746658d70b82d9'
-         '0a5f16bfec6ad982a2f6782724cca8ba'
-         '6f99095fbe9f577233b53a83802aab59'
-         '2300ce332b36a73e9ab097888d53c98a')
+  '61c5ff73c136ed07a7aadbf58db3d96a'
+  '584777ae88bce2c5659960151b64c7d8'
+  '593dacde485356f1ba746658d70b82d9'
+  '0a5f16bfec6ad982a2f6782724cca8ba'
+  '6f99095fbe9f577233b53a83802aab59'
+  '2300ce332b36a73e9ab097888d53c98a')
 
 # Determine architecture and cross-compiler
 case "$CARCH" in
-  aarch64)
-    _arch=arm64
-    _cross=$( [[ $(uname -m) == aarch64 ]] && echo "" || echo "aarch64-linux-gnu-" )
-    ;;
-  x86_64)
-    _arch=x86_64
-    _cross=""
-    ;;
+aarch64)
+  _arch=arm64
+  _cross=$([[ $(uname -m) == aarch64 ]] && echo "" || echo "aarch64-linux-gnu-")
+  ;;
+x86_64)
+  _arch=x86_64
+  _cross=""
+  ;;
 esac
 
 prepare() {
