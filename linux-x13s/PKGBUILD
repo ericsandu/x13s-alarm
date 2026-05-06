@@ -162,7 +162,7 @@ package_linux-x13s-headers() {
 
   echo "Installing build files..."
   install -Dt "$builddir" -m644 .config Makefile Module.symvers System.map \
-    localversion.* version vmlinux
+    localversion.* version vmlinux Kbuild
   install -Dt "$builddir/kernel" -m644 kernel/Makefile
   install -Dt "$builddir/arch/arm64" -m644 arch/arm64/Makefile
   cp -t "$builddir" -a scripts
@@ -191,8 +191,10 @@ package_linux-x13s-headers() {
   # https://bugs.archlinux.org/task/71392
   install -Dt "$builddir/drivers/iio/common/hid-sensors" -m644 drivers/iio/common/hid-sensors/*.h
 
-  echo "Installing KConfig files..."
+  echo "Installing KConfig, Kbuild and Makefiles..."
   find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
+  find . -name 'Kbuild*' -exec install -Dm644 {} "$builddir/{}" \;
+  find . -name 'Makefile*' -exec install -Dm644 {} "$builddir/{}" \;
 
   echo "Removing unneeded architectures..."
   local arch
@@ -205,8 +207,20 @@ package_linux-x13s-headers() {
   echo "Removing documentation..."
   rm -r "$builddir/Documentation"
 
-  echo "Cleaning up build artifacts to force native rebuild..."
-  find "$builddir" -type f \( -name '*.o' -o -name '*.ko' -o -name '*.a' -o -name 'fixdep' -o -name 'pahole' \) -delete
+  echo "Cleaning up build artifacts..."
+  find "$builddir" -type f -name "*.o" -delete
+  find "$builddir" -type f -name "*.ko" -delete
+  find "$builddir" -type f -name "*.a" -delete
+  find "$builddir" -type f -name "*.mod" -delete
+  find "$builddir" -type f -name "*.mod.c" -delete
+  find "$builddir" -type f -name "*.cmd" -delete
+
+  # remove all host binaries in scripts/ if cross-compiling
+  # DKMS will rebuild them natively on the target machine.
+  if [[ "$_cross" != "" ]]; then
+    echo "Cleaning up host binaries for cross-compiled build..."
+    find "$builddir/scripts" -type f -not -name "*.sh" -not -name "*.pl" -not -name "*.py" -executable -delete
+  fi
 
   echo "Adding symlink..."
   mkdir -p "$pkgdir/usr/src"
